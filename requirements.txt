@@ -1,0 +1,24 @@
+# local package
+-e .
+
+# external requirements
+black
+isort
+mypy
+nbstripout
+pyyaml
+pandas
+numpy
+scipy
+scikit-learn
+numba
+statsmodels
+matplotlib
+seaborn
+bokeh
+numpy
+streamlit
+python-pptx
+plotly
+
+pathlib2
