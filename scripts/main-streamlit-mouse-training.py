@@ -48,6 +48,7 @@ def create_subplots():
 
 def plot_accuracy_vs_date(fig, data):
     """Plot accuracy over time."""
+    data = data.sort_values(by="date", ascending=True)
     fig.add_trace(
         go.Scatter(
             x=data["date"],
@@ -65,6 +66,7 @@ def plot_accuracy_vs_date(fig, data):
 
 def plot_accuracy_vs_start_weight(fig, data):
     """Plot accuracy vs start weight."""
+    data = data.sort_values(by="date", ascending=True)
     fig.add_trace(
         go.Scatter(
             x=data["start_weight"].astype(int),
@@ -82,6 +84,7 @@ def plot_accuracy_vs_start_weight(fig, data):
 
 def plot_total_valid_vs_date(fig, data):
     """Plot total valid trials over time."""
+    data = data.sort_values(by="date", ascending=True)
     fig.add_trace(
         go.Scatter(
             x=data["date"],
@@ -99,6 +102,7 @@ def plot_total_valid_vs_date(fig, data):
 
 def plot_total_valid_vs_start_weight(fig, data):
     """Plot total valid trials vs start weight."""
+    data = data.sort_values(by="date", ascending=True)
     fig.add_trace(
         go.Scatter(
             x=data["start_weight"].astype(int),
