@@ -244,9 +244,14 @@ if start_date and end_date:
                     fig.add_trace(
                         go.Scatter(
                             x=session_data["coherences"],
-                            y=session_data["median_reaction_time"],
-                            mode="lines+markers",
+                            y=session_data["reaction_time_mean"],
+                            mode="markers",
                             marker=dict(size=12),
+                            error_y=dict(
+                                type="data",  # Specifies that the errors are data-based
+                                array=session_data["reaction_time_sd"],  # Standard deviation values
+                                visible=True,  # Ensures the error bars are shown
+                            ),
                             name=f"Session {idx+1}",
                             line=dict(color=COLOR[idx]),
                             hovertemplate="<b>Coherence</b>: %{x}<br><b>Median Reaction Time</b>: %{y}s<extra></extra>",
@@ -266,7 +271,7 @@ if start_date and end_date:
                     width=900,
                     yaxis=dict(title="Accuracy (%)", range=[0, 105], zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
                     yaxis2=dict(title="Accuracy (%)", range=[0, 105], zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
-                    yaxis3=dict(title="Reaction Time (s)", zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
+                    yaxis3=dict(title="Reaction Time (s)", range=[0, 5], zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
                     xaxis=dict(title="Trial Number", zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
                     xaxis2=dict(title="% Coherence"),
                     xaxis3=dict(title="% Coherence"),

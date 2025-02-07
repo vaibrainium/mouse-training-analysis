@@ -112,14 +112,16 @@ for mouse_id in session_info.mouse_id.unique():
 
             binned_trial, binned_accuracy = get_binned_accuracy(trial_info, bin_size=20)
             coherences, accuracies = pmf_utils.get_accuracy_data(trial_info)
-            _, median_reaction_time = pmf_utils.get_chronometric_data(trial_info)
+            _, reaction_time_median, reaction_time_mean, reaction_time_sd = pmf_utils.get_chronometric_data(trial_info)
 
             analyzed_data[metadata["index"]] = {
                 "binned_trials": binned_trial,
                 "binned_accuracies": binned_accuracy,
                 "coherences": coherences,
                 "accuracy": accuracies,
-                "median_reaction_time": median_reaction_time,
+                "reaction_time_mean": reaction_time_mean,
+                "reaction_time_median": reaction_time_median,
+                "reaction_time_sd": reaction_time_sd,
             }
 
 # Save the updated DataFrame to a new CSV file

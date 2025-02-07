@@ -10,7 +10,6 @@ warnings.filterwarnings("ignore")
 
 
 class PsychometricFunction(BaseEstimator, RegressorMixin):
-
     """
     Fit a logistic regression (Logit or it's modifications)
 
@@ -44,13 +43,9 @@ class PsychometricFunction(BaseEstimator, RegressorMixin):
 
     def __post_init__(self) -> None:
         if self.model not in ["logit_3", "logit_4"]:
-            raise ValueError(
-                f"Unknown mode: {self.model}. Available models: 'logit_4', 'logit_4'"
-            )
+            raise ValueError(f"Unknown mode: {self.model}. Available models: 'logit_4', 'logit_4'")
 
-    def logit_3(
-        self, x: np.ndarray, mean: float, var: float, lapse_rate: float
-    ) -> np.ndarray:
+    def logit_3(self, x: np.ndarray, mean: float, var: float, lapse_rate: float) -> np.ndarray:
         return lapse_rate + ((1.0 - 2 * lapse_rate) / (1 + np.exp(-var * (x - mean))))
 
     def logit_4(
@@ -61,9 +56,7 @@ class PsychometricFunction(BaseEstimator, RegressorMixin):
         lapse_rate: float,
         guess_rate: float,
     ) -> np.ndarray:
-        return lapse_rate + (
-            (1.0 - guess_rate - lapse_rate) / (1 + np.exp(-var * (x - mean)))
-        )
+        return lapse_rate + ((1.0 - guess_rate - lapse_rate) / (1 + np.exp(-var * (x - mean))))
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "PsychometricFunction":
 
@@ -160,19 +153,19 @@ class PsychometricFunction(BaseEstimator, RegressorMixin):
         return fig
 
 
-def get_psychometric_data(data, positive_direction='right'):
+def get_psychometric_data(data, positive_direction="right"):
     x_data = np.asarray([])
     y_data = np.asarray([])
-    for _, coh in enumerate(np.unique(data['signed_coherence'])):
-        if positive_direction == 'right':
+    for _, coh in enumerate(np.unique(data["signed_coherence"])):
+        if positive_direction == "right":
             x_data = np.append(x_data, coh)
-            y_data = np.append(y_data, np.sum(data['choice'][data['signed_coherence'] == coh] == 1) / np.sum(data['signed_coherence'] == coh))
-        elif positive_direction == 'left':
+            y_data = np.append(y_data, np.sum(data["choice"][data["signed_coherence"] == coh] == 1) / np.sum(data["signed_coherence"] == coh))
+        elif positive_direction == "left":
             x_data = np.append(x_data, -coh)
-            y_data = np.append(y_data, np.sum(data['choice'][data['signed_coherence'] == coh] == 0) / np.sum(data['signed_coherence'] == coh))
+            y_data = np.append(y_data, np.sum(data["choice"][data["signed_coherence"] == coh] == 0) / np.sum(data["signed_coherence"] == coh))
     # sorting
     x_data, y_data = zip(*sorted(zip(x_data, y_data)))
-    
+
     # fit psychometric function
     x_model = np.linspace(min(x_data), max(x_data), 100)
     model = fit_psychometric_function(x_data, y_data)
@@ -189,32 +182,48 @@ def fit_psychometric_function(x_data, y_data, **model_kwargs):
     return model
 
 
-def get_chronometric_data(data, positive_direction='right'):
+def get_chronometric_data(data, positive_direction="right"):
     coherences = np.asarray([])
-    chrono = np.asarray([])
-    for _, coh in enumerate(np.unique(data['signed_coherence'])):
-        if positive_direction == 'right':
+    reaction_time_median = np.asarray([])
+    reaction_time_mean = np.asarray([])
+    reaction_time_sd = np.asarray([])
+    for _, coh in enumerate(np.unique(data["signed_coherence"])):
+        if positive_direction == "right":
             coherences = np.append(coherences, coh)
-            chrono = np.append(chrono, np.median(data['response_time'][(data['signed_coherence'] == coh) & (data['outcome'] == 1)]))
-        elif positive_direction == 'letf':
+            reaction_time_median = np.append(
+                reaction_time_median, np.median(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)])
+            )
+            reaction_time_mean = np.append(
+                reaction_time_mean, np.mean(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)])
+            )
+            reaction_time_sd = np.append(reaction_time_sd, np.std(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)]))
+        elif positive_direction == "letf":
             coherences = np.append(coherences, -coh)
-            chrono = np.append(chrono, np.median(data['response_time'][(data['signed_coherence'] == coh) & (data['outcome'] == 1)]))
-            
+            reaction_time_median = np.append(
+                reaction_time_median, np.median(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)])
+            )
+            reaction_time_mean = np.append(
+                reaction_time_mean, np.mean(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)])
+            )
+            reaction_time_sd = np.append(reaction_time_sd, np.std(data["response_time"][(data["signed_coherence"] == coh) & (data["outcome"] == 1)]))
     # sort coherences and chrono by coherence
-    coherences, chrono = zip(*sorted(zip(coherences, chrono)))
-    return coherences, chrono
+    coherences, reaction_time_median, reaction_time_mean, reaction_time_sd = zip(
+        *sorted(zip(coherences, reaction_time_median, reaction_time_mean, reaction_time_sd))
+    )
+    return coherences, reaction_time_median, reaction_time_mean, reaction_time_sd
 
-def get_accuracy_data(data, positive_direction='right'):
+
+def get_accuracy_data(data, positive_direction="right"):
     coherences = np.asarray([])
     accuracy = np.asarray([])
-    for _, coh in enumerate(np.unique(data['signed_coherence'])):
-        if positive_direction == 'right':
+    for _, coh in enumerate(np.unique(data["signed_coherence"])):
+        if positive_direction == "right":
             coherences = np.append(coherences, coh)
-            accuracy = np.append(accuracy, np.sum(data['outcome'][data['signed_coherence'] == coh] == 1) / np.sum(data['signed_coherence'] == coh))
-        elif positive_direction == 'left':
+            accuracy = np.append(accuracy, np.sum(data["outcome"][data["signed_coherence"] == coh] == 1) / np.sum(data["signed_coherence"] == coh))
+        elif positive_direction == "left":
             coherences = np.append(coherences, -coh)
-            accuracy = np.append(accuracy, np.sum(data['outcome'][data['signed_coherence'] == coh] == 1) / np.sum(data['signed_coherence'] == coh))
-            
+            accuracy = np.append(accuracy, np.sum(data["outcome"][data["signed_coherence"] == coh] == 1) / np.sum(data["signed_coherence"] == coh))
+
     # sort coherences and chrono by coherence
     coherences, accuracy = zip(*sorted(zip(coherences, accuracy)))
     return np.array(coherences), np.array(accuracy)
