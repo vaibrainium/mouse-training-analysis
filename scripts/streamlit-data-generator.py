@@ -85,47 +85,64 @@ def get_binned_accuracy(data, bin_size=10):
     return binned_indices, np.array(binned_accuracy)
 
 
-# Get session information for recent sessions
-session_info = get_recent_sessions(last_X_business_days=30)
-session_info.date = pd.to_datetime(session_info.date).dt.date
-analyzed_data = {}
+if __name__ == "__main__":
+    # Get session information for recent sessions
+    session_info = get_recent_sessions(last_X_business_days=30)
+    session_info.date = pd.to_datetime(session_info.date).dt.date
+    analyzed_data = {}
 
-# Process each mouse and session
-for mouse_id in session_info.mouse_id.unique():
-    mouse_sessions = session_info[session_info.mouse_id == mouse_id]
-    for idx_date, date in enumerate(mouse_sessions.date.unique()):
-        sessions = mouse_sessions[mouse_sessions.date == date].reset_index()
-        for idx, metadata in sessions.iterrows():
-            trial_info = pd.read_csv(
-                data_dir / mouse_id / "data/random_dot_motion" / metadata.experiment / metadata.session / f"{mouse_id}_trial.csv"
-            )
-            trial_info = preprocess_data(trial_info)
+    # try to load old data if exists
+    try:
+        old_session_info = pd.read_csv(Path(OUTPUT_DATA_DIR / "session_info.csv"))
+        # if old_session_info is not empty and same as session_info then stop processing
+        if not old_session_info.empty:
+            # sort both dataframes by date and mouse_id
+            old_session_info = old_session_info.sort_values(by=["date", "mouse_id"]).reset_index(drop=True)
+            session_info = session_info.sort_values(by=["date", "mouse_id"]).reset_index(drop=True)
+            # check if 'mouse_id', 'date', 'session', and 'experiment' are the same in both dataframes
+            columns_to_compare = ["mouse_id", "experiment", "session"]
+            if session_info[columns_to_compare].equals(old_session_info[columns_to_compare]):
+                print("No new data to process.")
+                exit()
+    except FileNotFoundError:
+        pass
 
-            condition = (session_info.mouse_id == mouse_id) & (session_info.date == date) & (session_info.session == metadata.session)
+    # Process each mouse and session
+    for mouse_id in session_info.mouse_id.unique():
+        mouse_sessions = session_info[session_info.mouse_id == mouse_id]
+        for idx_date, date in enumerate(mouse_sessions.date.unique()):
+            sessions = mouse_sessions[mouse_sessions.date == date].reset_index()
+            for idx, metadata in sessions.iterrows():
+                trial_info = pd.read_csv(
+                    data_dir / mouse_id / "data/random_dot_motion" / metadata.experiment / metadata.session / f"{mouse_id}_trial.csv"
+                )
+                trial_info = preprocess_data(trial_info)
 
-            session_info.loc[condition, ["total_attempts", "total_valid", "session_accuracy", "total_reward"]] = [
-                max(trial_info.idx_attempt),
-                max(trial_info.idx_valid),
-                np.nanmean(trial_info.outcome) * 100,
-                np.sum(trial_info.trial_reward).astype(int),
-            ]
+                condition = (session_info.mouse_id == mouse_id) & (session_info.date == date) & (session_info.session == metadata.session)
 
-            binned_trial, binned_accuracy = get_binned_accuracy(trial_info, bin_size=20)
-            coherences, accuracies = pmf_utils.get_accuracy_data(trial_info)
-            _, reaction_time_median, reaction_time_mean, reaction_time_sd = pmf_utils.get_chronometric_data(trial_info)
+                session_info.loc[condition, ["total_attempts", "total_valid", "session_accuracy", "total_reward"]] = [
+                    max(trial_info.idx_attempt),
+                    max(trial_info.idx_valid),
+                    np.nanmean(trial_info.outcome) * 100,
+                    np.sum(trial_info.trial_reward).astype(int),
+                ]
 
-            analyzed_data[metadata["index"]] = {
-                "binned_trials": binned_trial,
-                "binned_accuracies": binned_accuracy,
-                "coherences": coherences,
-                "accuracy": accuracies,
-                "reaction_time_mean": reaction_time_mean,
-                "reaction_time_median": reaction_time_median,
-                "reaction_time_sd": reaction_time_sd,
-            }
+                binned_trial, binned_accuracy = get_binned_accuracy(trial_info, bin_size=20)
+                coherences, accuracies = pmf_utils.get_accuracy_data(trial_info)
+                _, reaction_time_median, reaction_time_mean, reaction_time_sd = pmf_utils.get_chronometric_data(trial_info)
 
-# Save the updated DataFrame to a new CSV file
-session_info.to_csv(Path(OUTPUT_DATA_DIR / "session_info.csv"), index=False)
-# save master_dict as pickle file
-with open(Path(OUTPUT_DATA_DIR / "analyzed_data.pkl"), "wb") as f:
-    pickle.dump(analyzed_data, f)
+                analyzed_data[metadata["index"]] = {
+                    "binned_trials": binned_trial,
+                    "binned_accuracies": binned_accuracy,
+                    "coherences": coherences,
+                    "accuracy": accuracies,
+                    "reaction_time_mean": reaction_time_mean,
+                    "reaction_time_median": reaction_time_median,
+                    "reaction_time_sd": reaction_time_sd,
+                }
+
+    # Save the updated DataFrame to a new CSV file
+    session_info.to_csv(Path(OUTPUT_DATA_DIR / "session_info.csv"), index=False)
+    # save master_dict as pickle file
+    with open(Path(OUTPUT_DATA_DIR / "analyzed_data.pkl"), "wb") as f:
+        pickle.dump(analyzed_data, f)

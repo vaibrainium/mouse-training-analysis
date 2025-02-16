@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.subplots as sp
@@ -134,7 +134,7 @@ def plot_summary_data(data):
         title_pad=dict(t=2),
         showlegend=True,
         height=900,
-        width=900,
+        width=600,
         yaxis=dict(title="Accuracy (%)", range=[0, 105], zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
         yaxis2=dict(title="Accuracy (%)", range=[0, 105], zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
         yaxis3=dict(title="Total Valid Trials", zeroline=True, zerolinecolor="black", zerolinewidth=2, mirror=True),
@@ -154,7 +154,7 @@ def filter_sessions_by_date_range(start_date, end_date, session_info):
 
 def display_mouse_selection(filtered_sessions):
     """Display mouse selection dropdown."""
-    mouse_options = [None] + list(filtered_sessions.mouse_id.unique())
+    mouse_options = [None] + list(np.sort(filtered_sessions.mouse_id.unique()))
     return st.selectbox("Select Mouse", options=mouse_options)
 
 
